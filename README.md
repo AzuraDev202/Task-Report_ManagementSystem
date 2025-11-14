@@ -111,16 +111,6 @@ npm run dev
 node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 ```
 
-## 👤 Tài khoản mặc định
-
-| Role | Email | Password | Quyền |
-|------|-------|----------|-------|
-| Admin | admin@company.com | admin123 | View + Delete + User Management |
-| Manager | manager@company.com | manager123 | View + Create + Edit + Approve |
-| User | user@company.com | user123 | View + Update Status + Report |
-
-⚠️ **Đổi password ngay sau lần đăng nhập đầu tiên!**
-
 ## 🚀 Commands
 
 ```bash
