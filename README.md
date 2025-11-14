@@ -172,8 +172,8 @@ Xem tất cả dữ liệu → Bulk delete tasks/reports → Quản lý users �
 
 **MIT License** - Tự do sử dụng cho mục đích học tập và thương mại.
 
-**Author:** [Azura-Deeper](https://github.com/Azura-Deeper)  
-**Repository:** [Task-Report_ManagementSystem](https://github.com/Azura-Deeper/Task-Report_ManagementSystem)
+**Author:** [Azura-Deeper](https://github.com/AzuraDev202)  
+**Repository:** [Task-Report_ManagementSystem](https://github.com/AzuraDev202/Task-Report_ManagementSystem)
 
 ---
 
