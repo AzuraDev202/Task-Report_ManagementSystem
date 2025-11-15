@@ -11,10 +11,12 @@ import {
   FiBell, 
   FiLogOut,
   FiMenu,
-  FiX
+  FiX,
+  FiMessageSquare
 } from 'react-icons/fi';
 import { DashboardProvider } from '@/contexts/DashboardContext';
 import NotificationDropdown from '@/components/NotificationDropdown';
+import MessagesDropdown from '@/components/MessagesDropdown';
 
 export default function DashboardLayout({
   children,
@@ -144,7 +146,12 @@ export default function DashboardLayout({
               </h2>
             </div>
 
-            {user.role !== 'admin' && <NotificationDropdown />}
+            {user.role !== 'admin' && (
+              <div className="flex items-center gap-2">
+                <MessagesDropdown />
+                <NotificationDropdown />
+              </div>
+            )}
           </div>
         </header>
 

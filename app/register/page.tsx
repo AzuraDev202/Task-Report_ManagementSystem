@@ -82,13 +82,6 @@ export default function RegisterPage() {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               Đăng ký tài khoản
             </h1>
-            <p className="text-gray-600">Tạo tài khoản mới trong hệ thống</p>
-            <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm text-blue-800">
-                <strong>ℹ️ Lưu ý:</strong> Tài khoản mới sẽ được tạo với quyền <strong>User</strong>.<br/>
-                Admin có thể thay đổi quyền thành <strong>Manager</strong> sau khi đăng ký.
-              </p>
-            </div>
           </div>
 
           {error && (

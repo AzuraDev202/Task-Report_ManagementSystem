@@ -20,6 +20,11 @@ async function getHandler(request: AuthenticatedRequest) {
     if (department) filter.department = department;
     if (isActive !== null) filter.isActive = isActive === 'true';
 
+    // Manager and User cannot see Admin accounts
+    if (request.user.role !== 'admin') {
+      filter.role = { $ne: 'admin' };
+    }
+
     const users = await User.find(filter)
       .select('-password')
       .sort({ createdAt: -1 });

@@ -35,6 +35,16 @@ export function withAuth(handler: Function, allowedRoles?: string[]) {
       role: decoded.role,
     };
 
-    return handler(request, context);
+    // Also pass simplified context with user object
+    const userContext = {
+      user: {
+        id: decoded.userId,
+        email: decoded.email,
+        role: decoded.role,
+      },
+      params: context?.params || {},
+    };
+
+    return handler(request, userContext);
   };
 }

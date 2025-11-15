@@ -106,8 +106,6 @@ export default function UserDetailPage() {
     return <div className="text-center py-12">Không tìm thấy người dùng</div>;
   }
 
-  const canEdit = currentUser?.role === 'admin' || currentUser?.role === 'manager';
-
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -118,11 +116,6 @@ export default function UserDetailPage() {
           <h1 className="text-2xl font-bold text-gray-900">Thông tin Người dùng</h1>
           <p className="text-gray-600">Chi tiết và thống kê người dùng</p>
         </div>
-        {canEdit && (
-          <Link href={`/dashboard/users/${params.id}/edit`} className="btn btn-primary">
-            Chỉnh sửa
-          </Link>
-        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

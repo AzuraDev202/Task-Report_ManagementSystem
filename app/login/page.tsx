@@ -52,7 +52,6 @@ export default function LoginPage() {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               Task & Report Management
             </h1>
-            <p className="text-gray-600">Đăng nhập vào hệ thống</p>
           </div>
 
           {error && (
@@ -106,14 +105,7 @@ export default function LoginPage() {
               </Link>
             </p>
           </div>
-
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <p className="text-xs text-gray-500 text-center">
-              Tài khoản demo:<br />
-              Admin: admin@company.com / Admin123!<br />
-              User: user@company.com / User123!
-            </p>
-          </div>
+          
         </div>
       </div>
     </div>
