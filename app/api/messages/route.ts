@@ -5,6 +5,10 @@ import User from '@/lib/models/User';
 import { withAuth } from '@/lib/middleware';
 import mongoose from 'mongoose';
 import { encrypt, decrypt } from '@/lib/encryption';
+import { writeFile, mkdir } from 'fs/promises';
+import path from 'path';
+import { v4 as uuidv4 } from 'uuid';
+import { cacheHeaders, jsonResponse, errorResponse } from '@/lib/utils/apiHelpers';
 
 // GET /api/messages - Get conversations list with last message
 export const GET = withAuth(async (req: NextRequest, { user }: any) => {
@@ -26,6 +30,8 @@ export const GET = withAuth(async (req: NextRequest, { user }: any) => {
       {
         $match: {
           $or: [{ sender: userId }, { receiver: userId }],
+          // Exclude messages deleted by current user
+          deletedBy: { $ne: userId }
         },
       },
       {
@@ -94,16 +100,13 @@ export const GET = withAuth(async (req: NextRequest, { user }: any) => {
       lastMessage: conv.lastMessage ? decrypt(conv.lastMessage) : '',
     }));
 
-    return NextResponse.json({
+    return jsonResponse({
       success: true,
       conversations: decryptedConversations,
-    });
+    }, { status: 200, cache: true, maxAge: 30 }); // Cache for 30 seconds
   } catch (error: any) {
     console.error('Get conversations error:', error);
-    return NextResponse.json(
-      { error: 'Không thể lấy danh sách hội thoại' },
-      { status: 500 }
-    );
+    return errorResponse('Không thể lấy danh sách hội thoại', 500);
   }
 });
 
@@ -120,12 +123,15 @@ export const POST = withAuth(async (req: NextRequest, { user }: any) => {
       );
     }
 
-    const { receiverId, content } = await req.json();
+    const formData = await req.formData();
+    const receiverId = formData.get('receiverId') as string;
+    const content = formData.get('content') as string;
+    const files = formData.getAll('files') as File[];
 
     // Validate input
-    if (!receiverId || !content?.trim()) {
+    if (!receiverId || (!content?.trim() && files.length === 0)) {
       return NextResponse.json(
-        { error: 'Receiver và nội dung tin nhắn là bắt buộc' },
+        { error: 'Receiver và nội dung tin nhắn hoặc file là bắt buộc' },
         { status: 400 }
       );
     }
@@ -154,13 +160,55 @@ export const POST = withAuth(async (req: NextRequest, { user }: any) => {
       );
     }
 
+    // Handle file uploads
+    const attachments = [];
+    if (files.length > 0) {
+      const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'messages');
+      
+      // Ensure upload directory exists
+      try {
+        await mkdir(uploadDir, { recursive: true });
+      } catch (error) {
+        // Directory might already exist
+      }
+
+      for (const file of files) {
+        if (file.size > 10 * 1024 * 1024) { // 10MB limit
+          return NextResponse.json(
+            { error: `File ${file.name} vượt quá 10MB` },
+            { status: 400 }
+          );
+        }
+
+        const buffer = Buffer.from(await file.arrayBuffer());
+        const filename = `${uuidv4()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+        const filepath = path.join(uploadDir, filename);
+        
+        await writeFile(filepath, buffer);
+        
+        attachments.push({
+          filename,
+          originalName: file.name,
+          path: `/uploads/messages/${filename}`,
+          mimetype: file.type,
+          size: file.size,
+        });
+      }
+    }
+
     // Create message with encrypted content
-    const encryptedContent = encrypt(content.trim());
-    const message = await Message.create({
+    const encryptedContent = content?.trim() ? encrypt(content.trim()) : '';
+    const messageData: any = {
       sender: user.id,
       receiver: receiverId,
-      content: encryptedContent,
-    });
+      content: encryptedContent || '[File đính kèm]',
+    };
+
+    if (attachments.length > 0) {
+      messageData.attachments = attachments;
+    }
+
+    const message = await Message.create(messageData);
 
     // Populate sender info
     await message.populate('sender', 'name email role avatar');
@@ -168,7 +216,23 @@ export const POST = withAuth(async (req: NextRequest, { user }: any) => {
 
     // Decrypt content before sending back
     const messageObj = message.toObject();
-    messageObj.content = decrypt(messageObj.content);
+    messageObj.content = messageObj.content ? decrypt(messageObj.content) : '';
+
+    // Emit Socket.io event for realtime updates
+    try {
+      const io = (global as any).io;
+      if (io) {
+        // Emit to receiver's room
+        io.to(`user:${receiverId}`).emit('newMessage', {
+          message: messageObj,
+          senderId: user.id
+        });
+        console.log(`Emitted newMessage to user:${receiverId}`);
+      }
+    } catch (socketError) {
+      console.error('Socket emit error:', socketError);
+      // Don't fail the request if socket emit fails
+    }
 
     return NextResponse.json({
       success: true,

@@ -5,6 +5,7 @@ import User from '@/lib/models/User';
 import { withAuth } from '@/lib/middleware';
 import mongoose from 'mongoose';
 import { decrypt } from '@/lib/encryption';
+import { cacheHeaders, jsonResponse, errorResponse } from '@/lib/utils/apiHelpers';
 
 // GET /api/messages/[userId] - Get conversation with specific user
 export const GET = withAuth(
@@ -52,6 +53,8 @@ export const GET = withAuth(
           { sender: user.id, receiver: otherUserId },
           { sender: otherUserId, receiver: user.id },
         ],
+        // Exclude messages deleted by current user
+        deletedBy: { $ne: user.id }
       })
         .sort({ createdAt: 1 })
         .populate('sender', 'name email role avatar')
@@ -76,7 +79,7 @@ export const GET = withAuth(
         return msgObj;
       });
 
-      return NextResponse.json({
+      return jsonResponse({
         success: true,
         messages: decryptedMessages,
         otherUser: {
@@ -86,13 +89,10 @@ export const GET = withAuth(
           role: otherUser.role,
           avatar: otherUser.avatar,
         },
-      });
+      }, { status: 200, cache: true, maxAge: 10 }); // Cache for 10 seconds (shorter as messages update frequently)
     } catch (error: any) {
       console.error('Get conversation error:', error);
-      return NextResponse.json(
-        { error: 'Không thể lấy cuộc hội thoại' },
-        { status: 500 }
-      );
+      return errorResponse('Không thể lấy cuộc hội thoại', 500);
     }
   }
 );

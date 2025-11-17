@@ -6,15 +6,26 @@ import Link from 'next/link';
 
 export default function MessagesDropdown() {
   const [unreadCount, setUnreadCount] = useState(0);
+  const [totalUnread, setTotalUnread] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchUnreadCount();
 
-    // Auto refresh every 10 seconds
-    const interval = setInterval(fetchUnreadCount, 10000);
-    return () => clearInterval(interval);
+    // Only refresh every 60 seconds (reduced from 30s)
+    const interval = setInterval(fetchUnreadCount, 60000);
+    
+    // Listen for custom event from MessagesComponent (primary update method)
+    const handleUpdate = () => {
+      fetchUnreadCount();
+    };
+    window.addEventListener('unreadMessagesUpdate', handleUpdate);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('unreadMessagesUpdate', handleUpdate);
+    };
   }, []);
 
   useEffect(() => {
@@ -33,6 +44,7 @@ export default function MessagesDropdown() {
       const token = localStorage.getItem('token');
       if (!token) {
         setUnreadCount(0);
+        setTotalUnread(0);
         return;
       }
 
@@ -44,16 +56,19 @@ export default function MessagesDropdown() {
       
       if (res.status === 401) {
         setUnreadCount(0);
+        setTotalUnread(0);
         return;
       }
       
       const data = await res.json();
       if (data.success) {
-        setUnreadCount(data.count);
+        setUnreadCount(data.count); // Number of conversations with unread messages
+        setTotalUnread(data.totalUnread || data.count); // Total unread messages
       }
     } catch (error) {
       console.error('Fetch unread count error:', error);
       setUnreadCount(0);
+      setTotalUnread(0);
     }
   };
 
@@ -72,12 +87,24 @@ export default function MessagesDropdown() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+        <div className="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
           <div className="p-4 border-b border-gray-200">
             <h3 className="font-semibold text-gray-800">Tin nhắn</h3>
             {unreadCount > 0 && (
-              <p className="text-sm text-gray-600 mt-1">
-                {unreadCount} tin nhắn chưa đọc
+              <div className="mt-2 space-y-1">
+                <p className="text-sm text-blue-600 font-medium">
+                  {unreadCount} cuộc trò chuyện có tin nhắn mới
+                </p>
+                {totalUnread > unreadCount && (
+                  <p className="text-xs text-gray-500">
+                    Tổng {totalUnread} tin nhắn chưa đọc
+                  </p>
+                )}
+              </div>
+            )}
+            {unreadCount === 0 && (
+              <p className="text-sm text-gray-500 mt-1">
+                Không có tin nhắn mới
               </p>
             )}
           </div>

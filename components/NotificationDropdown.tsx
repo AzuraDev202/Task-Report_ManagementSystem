@@ -16,10 +16,10 @@ export default function NotificationDropdown() {
   useEffect(() => {
     fetchNotifications();
     
-    // Refresh notifications every 30 seconds
+    // Refresh notifications every 60 seconds (reduced from 30s)
     const interval = setInterval(() => {
       fetchNotifications();
-    }, 30000);
+    }, 60000);
 
     return () => clearInterval(interval);
   }, []);

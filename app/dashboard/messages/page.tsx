@@ -76,13 +76,6 @@ export default function MessagesPage() {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800 mb-2">💬 Tin nhắn</h1>
-        <p className="text-gray-600">
-          Giao tiếp với các thành viên trong team
-        </p>
-      </div>
-
       <MessagesComponent currentUserId={currentUser.id || currentUser.userId || currentUser._id} />
     </div>
   );

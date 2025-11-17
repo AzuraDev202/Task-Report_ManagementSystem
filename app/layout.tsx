@@ -2,8 +2,13 @@ import React from 'react';
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
+import { SocketProvider } from '@/context/SocketContext'
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ 
+  subsets: ['latin'],
+  display: 'swap',
+  preload: true
+})
 
 export const metadata: Metadata = {
   title: 'Task & Report Management System',
@@ -17,7 +22,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="vi">
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        <SocketProvider>
+          {children}
+        </SocketProvider>
+      </body>
     </html>
   )
 }

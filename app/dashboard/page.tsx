@@ -39,10 +39,10 @@ export default function DashboardPage() {
   useEffect(() => {
     fetchStats();
     
-    // Auto refresh every 30 seconds
+    // Auto refresh every 60 seconds
     const interval = setInterval(() => {
       fetchStats();
-    }, 30000);
+    }, 60000);
 
     return () => clearInterval(interval);
   }, [fetchStats]);
@@ -75,19 +75,22 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Dashboard</h1>
-          <p className="text-gray-600">Tổng quan hệ thống quản lý công việc</p>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-2">Dashboard</h1>
+          <p className="text-gray-600 flex items-center gap-2">
+            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+            Tổng quan hệ thống quản lý công việc
+          </p>
         </div>
         <div className="flex items-center gap-3">
           {lastUpdate && (
-            <span className="text-sm text-gray-500">
-              Cập nhật: {lastUpdate.toLocaleTimeString('vi-VN')}
+            <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-lg">
+              🕒 {lastUpdate.toLocaleTimeString('vi-VN')}
             </span>
           )}
           <button
             onClick={handleRefresh}
             disabled={refreshing}
-            className="btn btn-secondary flex items-center gap-2"
+            className="btn btn-secondary flex items-center gap-2 shadow-md hover:shadow-lg transition-all"
           >
             <FiRefreshCw className={refreshing ? 'animate-spin' : ''} />
             {refreshing ? 'Đang tải...' : 'Làm mới'}
@@ -97,56 +100,71 @@ export default function DashboardPage() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className={`card bg-gradient-to-br from-blue-500 to-blue-600 text-white transition-all duration-300 ${refreshing ? 'opacity-50 scale-95' : 'opacity-100 scale-100'}`}>
+        <div className={`card bg-gradient-to-br from-blue-500 to-blue-600 text-white transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl ${refreshing ? 'opacity-50 scale-95' : 'opacity-100'}`}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-blue-100 text-sm">Tổng công việc</p>
-              <p className="text-3xl font-bold mt-2">{totalTasks}</p>
+              <p className="text-blue-100 text-sm font-medium">Tổng công việc</p>
+              <p className="text-4xl font-bold mt-2">{totalTasks}</p>
+              <p className="text-blue-200 text-xs mt-2">• Tất cả các tasks</p>
             </div>
-            <FiClipboard size={48} className="text-blue-200" />
+            <div className="bg-white/20 p-4 rounded-2xl backdrop-blur-sm">
+              <FiClipboard size={40} className="text-white" />
+            </div>
           </div>
         </div>
 
-        <div className={`card bg-gradient-to-br from-green-500 to-green-600 text-white transition-all duration-300 ${refreshing ? 'opacity-50 scale-95' : 'opacity-100 scale-100'}`}>
+        <div className={`card bg-gradient-to-br from-green-500 to-emerald-600 text-white transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl ${refreshing ? 'opacity-50 scale-95' : 'opacity-100'}`}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-green-100 text-sm">Hoàn thành</p>
-              <p className="text-3xl font-bold mt-2">
+              <p className="text-green-100 text-sm font-medium">Hoàn thành</p>
+              <p className="text-4xl font-bold mt-2">
                 {getStatusCount(stats?.taskStats, 'completed')}
               </p>
+              <p className="text-green-200 text-xs mt-2">• Đã xong</p>
             </div>
-            <FiClipboard size={48} className="text-green-200" />
+            <div className="bg-white/20 p-4 rounded-2xl backdrop-blur-sm">
+              <FiClipboard size={40} className="text-white" />
+            </div>
           </div>
         </div>
 
-        <div className={`card bg-gradient-to-br from-yellow-500 to-yellow-600 text-white transition-all duration-300 ${refreshing ? 'opacity-50 scale-95' : 'opacity-100 scale-100'}`}>
+        <div className={`card bg-gradient-to-br from-amber-500 to-orange-600 text-white transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl ${refreshing ? 'opacity-50 scale-95' : 'opacity-100'}`}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-yellow-100 text-sm">Đang xử lý</p>
-              <p className="text-3xl font-bold mt-2">
+              <p className="text-amber-100 text-sm font-medium">Đang xử lý</p>
+              <p className="text-4xl font-bold mt-2">
                 {getStatusCount(stats?.taskStats, 'in-progress')}
               </p>
+              <p className="text-amber-200 text-xs mt-2">• Đang tiến hành</p>
             </div>
-            <FiClipboard size={48} className="text-yellow-200" />
+            <div className="bg-white/20 p-4 rounded-2xl backdrop-blur-sm">
+              <FiClipboard size={40} className="text-white" />
+            </div>
           </div>
         </div>
 
-        <div className={`card bg-gradient-to-br from-red-500 to-red-600 text-white transition-all duration-300 ${refreshing ? 'opacity-50 scale-95' : 'opacity-100 scale-100'}`}>
+        <div className={`card bg-gradient-to-br from-red-500 to-rose-600 text-white transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl ${refreshing ? 'opacity-50 scale-95' : 'opacity-100'}`}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-red-100 text-sm">Quá hạn</p>
-              <p className="text-3xl font-bold mt-2">{stats?.overdueTasks || 0}</p>
+              <p className="text-red-100 text-sm font-medium">Quá hạn</p>
+              <p className="text-4xl font-bold mt-2">{stats?.overdueTasks || 0}</p>
+              <p className="text-red-200 text-xs mt-2">• Cần xử lý</p>
             </div>
-            <FiAlertCircle size={48} className="text-red-200" />
+            <div className="bg-white/20 p-4 rounded-2xl backdrop-blur-sm">
+              <FiAlertCircle size={40} className="text-white" />
+            </div>
           </div>
         </div>
       </div>
 
       {/* Recent Tasks */}
-      <div className="card">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-gray-900">Công việc gần đây</h2>
-          <Link href="/dashboard/tasks" className="text-primary-600 hover:text-primary-700 text-sm font-medium">
+      <div className="card shadow-lg hover:shadow-xl transition-shadow duration-300">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+            <div className="w-1 h-6 bg-gradient-to-b from-blue-500 to-indigo-600 rounded-full"></div>
+            Công việc gần đây
+          </h2>
+          <Link href="/dashboard/tasks" className="text-blue-600 hover:text-blue-700 text-sm font-semibold flex items-center gap-1 hover:gap-2 transition-all">
             Xem tất cả →
           </Link>
         </div>
