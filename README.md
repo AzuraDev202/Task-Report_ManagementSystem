@@ -407,11 +407,16 @@ npm install
 # 3. Tạo file .env.local
 # Copy từ .env.example và điền các giá trị:
 MONGODB_URI=your_mongodb_connection_string
-JWT_SECRET=your_jwt_secret_key
+JWT_SECRET=your_secure_random_jwt_secret
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
-ENCRYPTION_SECRET_KEY=your_32_character_secret_key
+ENCRYPTION_SECRET_KEY=your_32_character_encryption_key
 
-# 4. Seed database (tạo dữ liệu mẫu)
+# Lưu ý: 
+# - JWT_SECRET: Sử dụng chuỗi ngẫu nhiên dài tối thiểu 32 ký tự
+# - ENCRYPTION_SECRET_KEY: Phải có đúng 32 ký tự để sử dụng với AES-256-CBC
+# - MONGODB_URI: Connection string từ MongoDB Atlas hoặc local MongoDB
+
+# 4. Seed database (tạo admin account)
 npm run seed
 
 # 5. Chạy development server với Socket.io
@@ -420,21 +425,16 @@ npm run dev
 # 6. Truy cập http://localhost:3000
 ```
 
-### Accounts sau khi seed
+### Tài khoản Admin sau khi seed
 
-```
-Admin:
-Email: admin@company.com
-Password: Admin123!
+Sau khi chạy `npm run seed`, hệ thống sẽ tạo một tài khoản admin mặc định.
 
-Manager:
-Email: manager@company.com
-Password: Manager123!
+**⚠️ BẢO MẬT QUAN TRỌNG:**
+- Đăng nhập và **đổi mật khẩu admin ngay lập tức**
+- Xóa tài khoản admin mặc định sau khi tạo tài khoản admin mới
+- Không sử dụng mật khẩu mặc định trong môi trường production
 
-User:
-Email: user@company.com
-Password: User123!
-```
+Thông tin đăng nhập được hiển thị trong console sau khi seed thành công.
 
 ### Commands
 
@@ -442,7 +442,7 @@ Password: User123!
 npm run dev         # Development server (với Socket.io)
 npm run build       # Production build
 npm start           # Production server (với Socket.io)
-npm run seed        # Seed database với sample data
+npm run seed        # Seed database với admin account
 npm run lint        # Run ESLint
 ```
 
