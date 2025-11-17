@@ -18,13 +18,25 @@ export default function MessagesDropdown() {
     
     // Listen for custom event from MessagesComponent (primary update method)
     const handleUpdate = () => {
-      fetchUnreadCount();
+      fetchUnreadCount(true); // Bypass cache to get fresh count
     };
     window.addEventListener('unreadMessagesUpdate', handleUpdate);
+    
+    // Listen for token changes (login/logout) to refresh count
+    const handleTokenChange = () => {
+      // Clear and refetch after a short delay to ensure new user context
+      setTimeout(() => {
+        setUnreadCount(0);
+        setTotalUnread(0);
+        fetchUnreadCount(true); // Bypass cache for fresh data
+      }, 100);
+    };
+    window.addEventListener('tokenChange', handleTokenChange);
     
     return () => {
       clearInterval(interval);
       window.removeEventListener('unreadMessagesUpdate', handleUpdate);
+      window.removeEventListener('tokenChange', handleTokenChange);
     };
   }, []);
 
@@ -39,7 +51,7 @@ export default function MessagesDropdown() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const fetchUnreadCount = async () => {
+  const fetchUnreadCount = async (bypassCache = false) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -48,7 +60,11 @@ export default function MessagesDropdown() {
         return;
       }
 
-      const res = await fetch('/api/messages/unread/count', {
+      const url = bypassCache 
+        ? '/api/messages/unread/count?refresh=true'
+        : '/api/messages/unread/count';
+
+      const res = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },

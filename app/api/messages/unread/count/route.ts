@@ -28,19 +28,25 @@ export const GET = withAuth(async (req: NextRequest, { user }: any) => {
       });
     }
 
-    // Check cache first
+    // Check if bypass cache is requested
+    const url = new URL(req.url);
+    const bypassCache = url.searchParams.get('refresh') === 'true';
+
+    // Check cache first (unless bypassed)
     const cacheKey = user.id;
-    const cached = countCache.get(cacheKey);
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-      return NextResponse.json({
-        success: true,
-        count: cached.count,
-        totalUnread: cached.totalUnread,
-      }, {
-        headers: {
-          'Cache-Control': 'private, max-age=5',
-        }
-      });
+    if (!bypassCache) {
+      const cached = countCache.get(cacheKey);
+      if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+        return NextResponse.json({
+          success: true,
+          count: cached.count,
+          totalUnread: cached.totalUnread,
+        }, {
+          headers: {
+            'Cache-Control': 'private, max-age=5',
+          }
+        });
+      }
     }
 
     await connectDB();

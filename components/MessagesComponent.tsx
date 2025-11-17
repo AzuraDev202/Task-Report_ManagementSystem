@@ -180,8 +180,9 @@ export default function MessagesComponent({ currentUserId }: MessagesComponentPr
         return;
       }
 
-      // Get list of deleted conversation IDs from localStorage
-      const deletedConversations = JSON.parse(localStorage.getItem('deletedConversations') || '[]');
+      // Get list of deleted conversation IDs from localStorage (per user)
+      const deletedConversationsKey = `deletedConversations_${currentUserId}`;
+      const deletedConversations = JSON.parse(localStorage.getItem(deletedConversationsKey) || '[]');
 
       // Fetch 1-1 conversations
       const res = await fetch('/api/messages', {
@@ -260,20 +261,24 @@ export default function MessagesComponent({ currentUserId }: MessagesComponentPr
         setMessages(data.messages);
         setOtherUserInfo(data.otherUser);
         
-        // Only refresh conversations if there are messages (conversation exists on server)
-        if (data.messages && data.messages.length > 0) {
-          await fetchConversations(true);
-        }
+        // Update the specific conversation's unreadCount to 0 immediately
+        setConversations(prev => 
+          prev.map(conv => 
+            conv.userId === userId 
+              ? { ...conv, unreadCount: 0 }
+              : conv
+          )
+        );
         
-        // Update badge AFTER conversations are refreshed
+        // Update badge immediately (server has marked messages as read)
         setTimeout(() => {
-          debouncedUpdateBadge();
-        }, 100);
+          window.dispatchEvent(new CustomEvent('unreadMessagesUpdate'));
+        }, 500);
       }
     } catch (error) {
       console.error('Fetch messages error:', error);
     }
-  }, [fetchConversations, debouncedUpdateBadge]);
+  }, []);
 
   // Send message
   const handleSendMessage = async (e: React.FormEvent) => {
@@ -325,10 +330,11 @@ export default function MessagesComponent({ currentUserId }: MessagesComponentPr
         setShowEmojiPicker(false);
         
         // Remove from deleted conversations list if it was there
-        const deletedConversations = JSON.parse(localStorage.getItem('deletedConversations') || '[]');
+        const deletedConversationsKey = `deletedConversations_${currentUserId}`;
+        const deletedConversations = JSON.parse(localStorage.getItem(deletedConversationsKey) || '[]');
         if (deletedConversations.includes(selectedUser)) {
           const updated = deletedConversations.filter((id: string) => id !== selectedUser);
-          localStorage.setItem('deletedConversations', JSON.stringify(updated));
+          localStorage.setItem(deletedConversationsKey, JSON.stringify(updated));
         }
         
         // Don't fetch conversations here - socket will update it
@@ -432,6 +438,9 @@ export default function MessagesComponent({ currentUserId }: MessagesComponentPr
     // Check if conversation exists
     const existingConv = conversations.find(c => c.userId === userId);
     
+    // Track if this conversation has unread messages to trigger badge update
+    const hadUnreadMessages = existingConv && existingConv.unreadCount > 0;
+    
     if (!existingConv) {
       // This is a new conversation - create a temporary conversation immediately
       const selectedUserData = availableUsers.find(u => u._id === userId);
@@ -490,6 +499,14 @@ export default function MessagesComponent({ currentUserId }: MessagesComponentPr
       fetchMessages(userId);
     }
     
+    // If conversation had unread messages, update badge after database updates
+    if (hadUnreadMessages) {
+      // Wait for server to mark messages as read and database to commit
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('unreadMessagesUpdate'));
+      }, 600);
+    }
+    
     setShowNewChatModal(false);
     setShowEmojiPicker(false);
     setSelectedFiles([]);
@@ -509,17 +526,25 @@ export default function MessagesComponent({ currentUserId }: MessagesComponentPr
       const data = await res.json();
       if (data.success) {
         setMessages(data.messages);
-        // Force refresh conversations
-        await fetchConversations(true);
-        // Update badge AFTER conversations are refreshed
+        
+        // Update the specific conversation's unreadCount to 0 immediately
+        setConversations(prev => 
+          prev.map(conv => 
+            conv.userId === groupId 
+              ? { ...conv, unreadCount: 0 }
+              : conv
+          )
+        );
+        
+        // Update badge immediately (server has marked messages as read)
         setTimeout(() => {
-          debouncedUpdateBadge();
-        }, 100);
+          window.dispatchEvent(new CustomEvent('unreadMessagesUpdate'));
+        }, 500);
       }
     } catch (error) {
       console.error('Fetch group messages error:', error);
     }
-  }, [fetchConversations, debouncedUpdateBadge]);
+  }, []);
 
   // Handle emoji select - memoized
   const handleEmojiClick = useCallback((emojiObject: any) => {
@@ -580,10 +605,11 @@ export default function MessagesComponent({ currentUserId }: MessagesComponentPr
 
         if (res.ok) {
           // Add to deleted conversations list in localStorage
-          const deletedConversations = JSON.parse(localStorage.getItem('deletedConversations') || '[]');
+          const deletedConversationsKey = `deletedConversations_${currentUserId}`;
+          const deletedConversations = JSON.parse(localStorage.getItem(deletedConversationsKey) || '[]');
           if (!deletedConversations.includes(userId)) {
             deletedConversations.push(userId);
-            localStorage.setItem('deletedConversations', JSON.stringify(deletedConversations));
+            localStorage.setItem(deletedConversationsKey, JSON.stringify(deletedConversations));
           }
           
           // Remove from conversations list locally
@@ -612,10 +638,11 @@ export default function MessagesComponent({ currentUserId }: MessagesComponentPr
 
         if (res.ok) {
           // Add to deleted conversations list in localStorage
-          const deletedConversations = JSON.parse(localStorage.getItem('deletedConversations') || '[]');
+          const deletedConversationsKey = `deletedConversations_${currentUserId}`;
+          const deletedConversations = JSON.parse(localStorage.getItem(deletedConversationsKey) || '[]');
           if (!deletedConversations.includes(userId)) {
             deletedConversations.push(userId);
-            localStorage.setItem('deletedConversations', JSON.stringify(deletedConversations));
+            localStorage.setItem(deletedConversationsKey, JSON.stringify(deletedConversations));
           }
           
           // Remove from conversations list
@@ -874,10 +901,9 @@ export default function MessagesComponent({ currentUserId }: MessagesComponentPr
       // Wait a bit for server to save the message, then refresh conversations
       setTimeout(() => {
         fetchConversations(true);
+        // Update badge after conversations are refreshed
+        window.dispatchEvent(new CustomEvent('unreadMessagesUpdate'));
       }, 200);
-      
-      // Debounced badge update to reduce API calls
-      debouncedUpdateBadge();
     });
 
     // Listen for new group messages
@@ -907,10 +933,9 @@ export default function MessagesComponent({ currentUserId }: MessagesComponentPr
       // Wait a bit for server to save the message, then refresh conversations
       setTimeout(() => {
         fetchConversations(true);
+        // Update badge after conversations are refreshed
+        window.dispatchEvent(new CustomEvent('unreadMessagesUpdate'));
       }, 200);
-      
-      // Debounced badge update to reduce API calls
-      debouncedUpdateBadge();
     });
 
     // Listen for typing indicators
@@ -982,11 +1007,19 @@ export default function MessagesComponent({ currentUserId }: MessagesComponentPr
     }
   }, [socket, selectedUser, conversations]);
 
-  // Initial load
+  // Initial load and reload when user changes
   useEffect(() => {
-    fetchConversations();
+    // Clear cache and state when user changes
+    conversationsCacheRef.current = null;
+    setConversations([]);
+    setSelectedUser(null);
+    setMessages([]);
+    setOtherUserInfo(null);
+    
+    // Fetch fresh conversations
+    fetchConversations(true);
     setLoading(false);
-  }, []);
+  }, [currentUserId, fetchConversations]);
 
   if (loading) {
     return <div className="p-8 text-center">Đang tải...</div>;

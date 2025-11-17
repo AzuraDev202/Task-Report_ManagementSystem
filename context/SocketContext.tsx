@@ -20,11 +20,41 @@ export const useSocket = () => {
 export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
+
+  // Monitor token changes in localStorage
+  useEffect(() => {
+    const checkToken = () => {
+      const currentToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      setToken(currentToken);
+    };
+
+    // Check initially
+    checkToken();
+
+    // Listen for storage changes (e.g., login/logout in same tab or other tabs)
+    window.addEventListener('storage', checkToken);
+    
+    // Custom event for same-tab token changes
+    window.addEventListener('tokenChange', checkToken);
+
+    return () => {
+      window.removeEventListener('storage', checkToken);
+      window.removeEventListener('tokenChange', checkToken);
+    };
+  }, []);
 
   useEffect(() => {
     // Check if user is logged in before initializing socket
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    if (!token) return;
+    if (!token) {
+      // Disconnect socket if no token
+      if (socket) {
+        socket.disconnect();
+        setSocket(null);
+        setIsConnected(false);
+      }
+      return;
+    }
 
     // Initialize socket connection with optimizations
     const socketInstance = io(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000', {
@@ -39,7 +69,8 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       reconnectionAttempts: 5,
       timeout: 10000,
       autoConnect: true,
-      forceNew: false
+      forceNew: true,
+      auth: { token }
     });
 
     socketInstance.on('connect', () => {
@@ -59,7 +90,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return () => {
       socketInstance.disconnect();
     };
-  }, []);
+  }, [token]);
 
   return (
     <SocketContext.Provider value={{ socket, isConnected }}>

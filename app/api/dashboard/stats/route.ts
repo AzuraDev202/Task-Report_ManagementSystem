@@ -12,14 +12,18 @@ async function getHandler(request: AuthenticatedRequest) {
     await connectDB();
 
     const userId = request.user?.userId ? new mongoose.Types.ObjectId(request.user.userId) : null;
+    const userRole = request.user?.role;
 
-    const userFilter = request.user?.role === 'user' 
-      ? { $or: [{ assignedTo: userId }, { assignedBy: userId }] }
-      : {};
+    // Filter based on role
+    // Admin: sees everything
+    // User/Manager: only sees tasks assigned to them or created by them
+    const taskFilter = (userRole === 'admin') 
+      ? {}
+      : { $or: [{ assignedTo: userId }, { assignedBy: userId }] };
 
     // Get task statistics
     const taskStats = await Task.aggregate([
-      { $match: userFilter },
+      { $match: taskFilter },
       {
         $group: {
           _id: '$status',
@@ -29,7 +33,7 @@ async function getHandler(request: AuthenticatedRequest) {
     ]);
 
     const tasksByPriority = await Task.aggregate([
-      { $match: userFilter },
+      { $match: taskFilter },
       {
         $group: {
           _id: '$priority',
@@ -39,9 +43,11 @@ async function getHandler(request: AuthenticatedRequest) {
     ]);
 
     // Get report statistics
-    const reportFilter = request.user?.role === 'user' 
-      ? { user: userId }
-      : {};
+    // Admin: sees all reports
+    // User/Manager: only sees their own reports
+    const reportFilter = (userRole === 'admin') 
+      ? {}
+      : { user: userId };
 
     const reportStats = await Report.aggregate([
       { $match: reportFilter },
@@ -55,12 +61,12 @@ async function getHandler(request: AuthenticatedRequest) {
 
     // Get user count (admin/manager only)
     let userCount = 0;
-    if (request.user?.role === 'admin' || request.user?.role === 'manager') {
+    if (userRole === 'admin' || userRole === 'manager') {
       userCount = await User.countDocuments({ isActive: true });
     }
 
     // Get recent tasks
-    const recentTasks = await Task.find(userFilter)
+    const recentTasks = await Task.find(taskFilter)
       .populate('assignedTo', 'name email avatar')
       .populate('assignedBy', 'name email avatar')
       .sort({ createdAt: -1 })
@@ -68,7 +74,7 @@ async function getHandler(request: AuthenticatedRequest) {
 
     // Get overdue tasks
     const overdueTasks = await Task.find({
-      ...userFilter,
+      ...taskFilter,
       dueDate: { $lt: new Date() },
       status: { $nin: ['completed', 'cancelled'] },
     }).countDocuments();

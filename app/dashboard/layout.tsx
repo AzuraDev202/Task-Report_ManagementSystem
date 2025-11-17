@@ -40,8 +40,20 @@ export default function DashboardLayout({
   }, [router]);
 
   const handleLogout = () => {
+    // Clear all user-specific data
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    
+    // Clear deletedConversations for all users (cleanup)
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('deletedConversations_')) {
+        localStorage.removeItem(key);
+      }
+    });
+    
+    // Trigger custom event for socket disconnection
+    window.dispatchEvent(new Event('tokenChange'));
+    
     router.push('/login');
   };
 

@@ -34,6 +34,9 @@ export default function LoginPage() {
       // Save token and user info
       localStorage.setItem('token', data.data.token);
       localStorage.setItem('user', JSON.stringify(data.data.user));
+      
+      // Trigger custom event for socket reconnection
+      window.dispatchEvent(new Event('tokenChange'));
 
       // Redirect to dashboard
       router.push('/dashboard');
