@@ -38,6 +38,23 @@ export default function DashboardLayout({
     }
 
     setUser(JSON.parse(userData));
+
+    // Listen for user data changes (e.g., when profile is updated)
+    const handleStorageChange = () => {
+      const updatedUserData = localStorage.getItem('user');
+      if (updatedUserData) {
+        setUser(JSON.parse(updatedUserData));
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    // Custom event for same-tab updates
+    window.addEventListener('userUpdated', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('userUpdated', handleStorageChange);
+    };
   }, [router]);
 
   const handleLogout = () => {
@@ -130,8 +147,20 @@ export default function DashboardLayout({
 
           <div className="p-4 border-t border-gray-200 bg-gray-50">
             <div className="flex items-center mb-3 p-3 bg-white rounded-xl shadow-sm">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold shadow-md">
-                {user.name.charAt(0).toUpperCase()}
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold shadow-md ${
+                user.avatar 
+                  ? 'bg-transparent' 
+                  : 'bg-gradient-to-br from-blue-500 to-indigo-600'
+              }`}>
+                {user.avatar ? (
+                  <img
+                    src={user.avatar}
+                    alt={user.name}
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                ) : (
+                  user.name.charAt(0).toUpperCase()
+                )}
               </div>
               <div className="ml-3 flex-1 min-w-0">
                 <p className="text-sm font-semibold text-gray-900 truncate">{user.name}</p>

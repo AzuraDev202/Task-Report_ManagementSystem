@@ -8,9 +8,9 @@ export default function SettingsPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -85,6 +85,37 @@ export default function SettingsPage() {
 
     try {
       const token = localStorage.getItem('token');
+      let avatarUrl = currentUser.avatar;
+
+      // Upload avatar if a new file is selected
+      if (selectedFile) {
+        console.log('Uploading file:', selectedFile.name);
+        const formDataUpload = new FormData();
+        formDataUpload.append('file', selectedFile);
+
+        const uploadRes = await fetch('/api/upload', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+          body: formDataUpload,
+        });
+
+        const uploadData = await uploadRes.json();
+        console.log('Upload response:', uploadData);
+
+        if (uploadRes.ok && uploadData.success) {
+          avatarUrl = uploadData.data.url; // Get URL from data object
+          console.log('New avatar URL:', avatarUrl);
+        } else {
+          setMessage({ type: 'error', text: uploadData.message || 'Upload ảnh thất bại!' });
+          setSaving(false);
+          return;
+        }
+      }
+
+      // Update user profile
+      console.log('Updating user with avatar:', avatarUrl);
       const res = await fetch(`/api/users/${currentUser._id}`, {
         method: 'PUT',
         headers: {
@@ -93,18 +124,30 @@ export default function SettingsPage() {
         },
         body: JSON.stringify({
           ...formData,
-          avatar: currentUser.avatar, // Keep current avatar
+          avatar: avatarUrl,
         }),
       });
 
       const data = await res.json();
+      console.log('Update response:', data);
 
       if (res.ok) {
         setMessage({ type: 'success', text: 'Cập nhật thông tin thành công!' });
         // Update localStorage with response data
         const updatedUser = data.data || data;
+        console.log('Updated user:', updatedUser);
         localStorage.setItem('user', JSON.stringify(updatedUser));
         setCurrentUser(updatedUser);
+        setAvatarPreview(null);
+        setSelectedFile(null);
+        
+        // Trigger event to update sidebar avatar
+        window.dispatchEvent(new Event('userUpdated'));
+        
+        // Force re-render with new avatar
+        setTimeout(() => {
+          fetchUserData();
+        }, 100);
       } else {
         setMessage({ type: 'error', text: data.message || 'Cập nhật thất bại!' });
       }
@@ -160,7 +203,7 @@ export default function SettingsPage() {
     }
   };
 
-  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -176,59 +219,15 @@ export default function SettingsPage() {
       return;
     }
 
-    // Show preview immediately
+    // Store file and show preview
+    setSelectedFile(file);
+    setMessage({ type: '', text: '' });
+    
     const reader = new FileReader();
     reader.onloadend = () => {
       setAvatarPreview(reader.result as string);
     };
     reader.readAsDataURL(file);
-
-    setUploadingAvatar(true);
-    setMessage({ type: '', text: '' });
-
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const token = localStorage.getItem('token');
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-        body: formData,
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        // Update user avatar
-        const updateRes = await fetch(`/api/users/${currentUser._id}`, {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ avatar: data.url }),
-        });
-
-        if (updateRes.ok) {
-          const updatedUser = { ...currentUser, avatar: data.url };
-          localStorage.setItem('user', JSON.stringify(updatedUser));
-          setCurrentUser(updatedUser);
-          setAvatarPreview(null); // Clear preview since we have real URL now
-          setMessage({ type: 'success', text: 'Cập nhật ảnh đại diện thành công!' });
-        }
-      } else {
-        setMessage({ type: 'error', text: 'Upload ảnh thất bại!' });
-        setAvatarPreview(null); // Clear preview on error
-      }
-    } catch (error) {
-      setMessage({ type: 'error', text: 'Đã xảy ra lỗi khi upload ảnh!' });
-      setAvatarPreview(null); // Clear preview on error
-    } finally {
-      setUploadingAvatar(false);
-    }
   };
 
   if (loading) {
@@ -288,7 +287,7 @@ export default function SettingsPage() {
                 accept="image/*"
                 onChange={handleAvatarChange}
                 className="hidden"
-                disabled={uploadingAvatar}
+                disabled={saving}
               />
             </label>
           </div>
@@ -298,9 +297,6 @@ export default function SettingsPage() {
             <p className="text-xs text-gray-400 mt-2">
               Định dạng: JPG, PNG, GIF (Tối đa 5MB)
             </p>
-            {uploadingAvatar && (
-              <p className="text-sm text-blue-600 mt-2">Đang upload...</p>
-            )}
           </div>
         </div>
       </div>
