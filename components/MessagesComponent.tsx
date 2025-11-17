@@ -306,6 +306,11 @@ export default function MessagesComponent({ currentUserId }: MessagesComponentPr
       
       formData.append('content', newMessage.trim());
       
+      // Add reply information if replying to a message
+      if (replyingTo) {
+        formData.append('replyToId', replyingTo._id);
+      }
+      
       // Append files
       selectedFiles.forEach(file => {
         formData.append('files', file);
@@ -328,6 +333,7 @@ export default function MessagesComponent({ currentUserId }: MessagesComponentPr
         setNewMessage('');
         setSelectedFiles([]);
         setShowEmojiPicker(false);
+        setReplyingTo(null); // Clear reply state
         
         // Remove from deleted conversations list if it was there
         const deletedConversationsKey = `deletedConversations_${currentUserId}`;
@@ -1286,6 +1292,7 @@ export default function MessagesComponent({ currentUserId }: MessagesComponentPr
                     onDelete={() => handleDeleteMessage(msg._id)}
                     onReaction={handleAddReaction}
                     onRemoveReaction={handleRemoveReaction}
+                    onReply={(message) => setReplyingTo(message)}
                   />
                 ))
               )}
@@ -1311,6 +1318,30 @@ export default function MessagesComponent({ currentUserId }: MessagesComponentPr
               onSubmit={handleSendMessage}
               className="p-5 border-t border-gray-200/50 bg-white backdrop-blur-md"
             >
+              {/* Reply preview */}
+              {replyingTo && (
+                <div className="mb-3 p-3 bg-gray-50 border-l-4 border-blue-500 rounded-lg flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <FiCornerUpLeft size={14} className="text-blue-600" />
+                      <span className="text-xs font-semibold text-blue-600">
+                        Replying to {replyingTo.sender.name}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600 line-clamp-2">
+                      {replyingTo.content || '[File đính kèm]'}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setReplyingTo(null)}
+                    className="p-1 text-gray-400 hover:text-gray-600 transition"
+                  >
+                    <FiX size={18} />
+                  </button>
+                </div>
+              )}
+
               {/* Selected files preview */}
               {selectedFiles.length > 0 && (
                 <div className="mb-2 flex flex-wrap gap-2">

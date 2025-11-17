@@ -58,7 +58,15 @@ export const GET = withAuth(
       })
         .sort({ createdAt: 1 })
         .populate('sender', 'name email role avatar')
-        .populate('receiver', 'name email role avatar');
+        .populate('receiver', 'name email role avatar')
+        .populate({
+          path: 'replyTo',
+          select: 'content sender',
+          populate: {
+            path: 'sender',
+            select: 'name'
+          }
+        });
 
       // Mark messages from other user as read
       await Message.updateMany(
@@ -76,6 +84,10 @@ export const GET = withAuth(
       const decryptedMessages = messages.map(msg => {
         const msgObj = msg.toObject();
         msgObj.content = decrypt(msgObj.content);
+        // Decrypt replyTo content if exists
+        if (msgObj.replyTo && msgObj.replyTo.content) {
+          msgObj.replyTo.content = decrypt(msgObj.replyTo.content);
+        }
         return msgObj;
       });
 

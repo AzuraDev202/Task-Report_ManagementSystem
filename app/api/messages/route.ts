@@ -126,6 +126,7 @@ export const POST = withAuth(async (req: NextRequest, { user }: any) => {
     const formData = await req.formData();
     const receiverId = formData.get('receiverId') as string;
     const content = formData.get('content') as string;
+    const replyToId = formData.get('replyToId') as string;
     const files = formData.getAll('files') as File[];
 
     // Validate input
@@ -208,15 +209,37 @@ export const POST = withAuth(async (req: NextRequest, { user }: any) => {
       messageData.attachments = attachments;
     }
 
+    // Add reply information if provided
+    if (replyToId) {
+      messageData.replyTo = replyToId;
+    }
+
     const message = await Message.create(messageData);
 
-    // Populate sender info
+    // Populate sender and receiver info
     await message.populate('sender', 'name email role avatar');
     await message.populate('receiver', 'name email role avatar');
+    
+    // Populate replyTo message with sender info
+    if (message.replyTo) {
+      await message.populate({
+        path: 'replyTo',
+        select: 'content sender',
+        populate: {
+          path: 'sender',
+          select: 'name'
+        }
+      });
+    }
 
     // Decrypt content before sending back
     const messageObj = message.toObject();
     messageObj.content = messageObj.content ? decrypt(messageObj.content) : '';
+    
+    // Decrypt replyTo content if exists
+    if (messageObj.replyTo && messageObj.replyTo.content) {
+      messageObj.replyTo.content = decrypt(messageObj.replyTo.content);
+    }
 
     // Emit Socket.io event for realtime updates
     try {

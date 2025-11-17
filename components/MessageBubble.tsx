@@ -209,10 +209,10 @@ const MessageBubble = memo<MessageBubbleProps>(({
                   }`}
                 >
                   <p className={`text-xs font-semibold mb-1 ${isMe ? 'text-white/90' : 'text-blue-600'}`}>
-                    {message.replyTo.sender.name}
+                    {message.replyTo.sender?.name || 'Unknown User'}
                   </p>
                   <p className={`text-xs line-clamp-2 ${isMe ? 'text-white/80' : 'text-gray-600'}`}>
-                    {message.replyTo.content}
+                    {message.replyTo.content || '[No content]'}
                   </p>
                 </div>
               )}
