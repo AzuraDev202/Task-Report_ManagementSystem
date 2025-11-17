@@ -12,7 +12,8 @@ import {
   FiLogOut,
   FiMenu,
   FiX,
-  FiMessageSquare
+  FiMessageSquare,
+  FiSettings
 } from 'react-icons/fi';
 import { DashboardProvider } from '@/contexts/DashboardContext';
 import NotificationDropdown from '@/components/NotificationDropdown';
@@ -73,6 +74,9 @@ export default function DashboardLayout({
     { name: 'Báo cáo', href: '/dashboard/reports', icon: FiFileText },
     ...(user.role === 'admin' || user.role === 'manager' 
       ? [{ name: 'Người dùng', href: '/dashboard/users', icon: FiUsers }]
+      : []),
+    ...(user.role !== 'admin' 
+      ? [{ name: 'Cài đặt', href: '/dashboard/settings', icon: FiSettings }]
       : []),
   ];
 

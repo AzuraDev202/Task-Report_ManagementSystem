@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
   try {
     await connectDB();
 
-    const { name, email, password, department, position } = await request.json();
+    const { name, email, password, department, position, phone } = await request.json();
 
     // Validation
     if (!name || !email || !password) {
@@ -32,6 +32,7 @@ export async function POST(request: NextRequest) {
       role: 'user', // Always 'user' for public registration, admin can change later
       department,
       position,
+      phone,
     });
 
     // Generate token
@@ -46,6 +47,7 @@ export async function POST(request: NextRequest) {
           role: user.role,
           department: user.department,
           position: user.position,
+          phone: user.phone,
         },
         token,
       },

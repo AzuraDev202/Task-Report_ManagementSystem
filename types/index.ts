@@ -6,6 +6,7 @@ export interface IUser {
   role: 'admin' | 'manager' | 'user';
   department?: string;
   position?: string;
+  phone?: string;
   avatar?: string;
   isActive: boolean;
   createdAt: Date;

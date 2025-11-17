@@ -13,6 +13,7 @@ export default function RegisterPage() {
     confirmPassword: '',
     department: '',
     position: '',
+    phone: '',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -52,6 +53,7 @@ export default function RegisterPage() {
           password: formData.password,
           department: formData.department,
           position: formData.position,
+          phone: formData.phone,
         }),
       });
 
@@ -142,6 +144,20 @@ export default function RegisterPage() {
                 value={formData.position}
                 onChange={handleChange}
                 className="input"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Số điện thoại
+              </label>
+              <input
+                type="tel"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                className="input"
+                placeholder="0912345678"
               />
             </div>
 

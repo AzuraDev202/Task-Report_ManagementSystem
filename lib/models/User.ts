@@ -33,6 +33,10 @@ const UserSchema = new Schema<IUser>(
       type: String,
       trim: true,
     },
+    phone: {
+      type: String,
+      trim: true,
+    },
     avatar: {
       type: String,
     },

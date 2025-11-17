@@ -35,20 +35,44 @@ async function putHandler(
     await connectDB();
 
     const body = await request.json();
-    const { name, email, role, department, position, isActive, password } = body;
+    const { name, email, role, department, position, isActive, password, avatar, phone } = body;
+
+    const currentUserId = request.user?.userId;
+    const isAdmin = request.user?.role === 'admin';
+    const isSelfUpdate = currentUserId === params.id;
+
+    // Users can only update their own profile (except role and isActive)
+    // Admins can update anyone
+    if (!isAdmin && !isSelfUpdate) {
+      return errorResponse('Bạn chỉ có thể cập nhật thông tin của chính mình', 403);
+    }
 
     const updateData: any = {
       name,
       email,
-      role,
       department,
       position,
-      isActive,
+      phone,
+      avatar,
     };
 
-    if (password) {
+    // Only admin can change role and isActive
+    if (isAdmin) {
+      if (role !== undefined) updateData.role = role;
+      if (isActive !== undefined) updateData.isActive = isActive;
+    }
+
+    // Only admin can change password through this endpoint
+    if (password && isAdmin) {
       updateData.password = await hashPassword(password);
     }
+
+    // Remove undefined fields
+    Object.keys(updateData).forEach(key => {
+      if (updateData[key] === undefined) {
+        delete updateData[key];
+      }
+    });
 
     const user = await User.findByIdAndUpdate(
       params.id,
@@ -89,5 +113,5 @@ async function deleteHandler(
 }
 
 export const GET = withAuth(getHandler, ['admin', 'manager']);
-export const PUT = withAuth(putHandler, ['admin']);
+export const PUT = withAuth(putHandler); // Allow all authenticated users to update (with restrictions in handler)
 export const DELETE = withAuth(deleteHandler, ['admin']);

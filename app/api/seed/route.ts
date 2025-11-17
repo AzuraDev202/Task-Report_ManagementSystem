@@ -22,30 +22,7 @@ export async function GET() {
       role: 'admin',
       department: 'IT',
       position: 'System Admin',
-      isActive: true,
-    });
-
-    // Create manager user
-    const managerPassword = await hashPassword('Manager123!');
-    await User.create({
-      name: 'Manager User',
-      email: 'manager@company.com',
-      password: managerPassword,
-      role: 'manager',
-      department: 'Operations',
-      position: 'Project Manager',
-      isActive: true,
-    });
-
-    // Create regular user
-    const userPassword = await hashPassword('User123!');
-    await User.create({
-      name: 'Regular User',
-      email: 'user@company.com',
-      password: userPassword,
-      role: 'user',
-      department: 'Development',
-      position: 'Developer',
+      phone: '0123456789',
       isActive: true,
     });
 
@@ -53,8 +30,6 @@ export async function GET() {
       message: 'Seed data created successfully',
       users: [
         { email: 'admin@company.com', password: 'Admin123!', role: 'admin' },
-        { email: 'manager@company.com', password: 'Manager123!', role: 'manager' },
-        { email: 'user@company.com', password: 'User123!', role: 'user' },
       ]
     });
   } catch (error: any) {
