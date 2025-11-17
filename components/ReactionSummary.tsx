@@ -42,30 +42,29 @@ function ReactionSummary({ reactions, currentUserId, onReactionClick }: Reaction
   const userReacted = reactions.some(r => r.userId === currentUserId);
 
   return (
-    <button
+    <div
       onClick={onReactionClick}
       className={`
-        absolute -bottom-3 right-2 flex items-center gap-1 px-2 py-1 rounded-full
-        bg-white border-2 shadow-md hover:shadow-lg transition-all transform hover:scale-110
-        ${userReacted ? 'border-blue-500' : 'border-gray-200'}
+        absolute -bottom-2 -right-2 flex items-center gap-0.5 px-1.5 py-0.5 rounded-full
+        bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all cursor-pointer
       `}
     >
       {/* Show top reaction emojis */}
-      <div className="flex items-center -space-x-1">
+      <div className="flex items-center">
         {topReactions.map(([type]) => (
-          <span key={type} className="text-sm">
+          <span key={type} className="text-base leading-none">
             {reactionEmojis[type]}
           </span>
         ))}
       </div>
       
       {/* Reaction count */}
-      {totalCount > 0 && (
-        <span className={`text-xs font-semibold ${userReacted ? 'text-blue-600' : 'text-gray-600'}`}>
+      {totalCount > 1 && (
+        <span className="text-[10px] font-semibold ml-0.5 text-gray-600">
           {totalCount}
         </span>
       )}
-    </button>
+    </div>
   );
 }
 

@@ -99,6 +99,7 @@ const MessageBubble = memo<MessageBubbleProps>(({
     } else {
       onReaction?.(message._id, reactionType);
     }
+    setShowReactionPicker(false);
   };
 
   // Get status icon
@@ -178,7 +179,11 @@ const MessageBubble = memo<MessageBubbleProps>(({
 
             {/* Reaction picker */}
             {showReactionPicker && (
-              <div className={`absolute left-0 z-[9999] ${showPickerBelow ? 'top-full mt-2' : 'bottom-full mb-2'}`}>
+              <div className={`absolute z-[9999] ${
+                showPickerBelow ? 'top-full mt-2' : 'bottom-full mb-2'
+              } ${
+                isMe ? 'right-0' : 'left-0'
+              }`}>
                 <ReactionPicker
                   onSelect={handleReactionSelect}
                   onClose={() => setShowReactionPicker(false)}

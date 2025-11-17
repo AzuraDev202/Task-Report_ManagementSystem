@@ -2,14 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/middleware';
 import dbConnect from '@/lib/mongodb';
 import Message from '@/lib/models/Message';
-import { Server as SocketIOServer } from 'socket.io';
-
-// GET socket.io instance
-let io: SocketIOServer;
-if (typeof window === 'undefined') {
-  const { io: socketIO } = require('@/server');
-  io = socketIO;
-}
 
 // Add reaction to message
 export const POST = withAuth(async (
@@ -59,17 +51,7 @@ export const POST = withAuth(async (
 
     await message.save();
 
-    // Emit socket event for realtime update
-    const conversationId = message.isGroupMessage ? message.groupId : message.receiver;
-    if (io && conversationId) {
-      io.to(conversationId.toString()).emit('messageReaction', {
-        messageId: message._id,
-        reactions: message.reactions,
-        userId: user.id,
-        reactionType
-      });
-    }
-
+    // Socket.io events will be handled by client-side socket connection
     return NextResponse.json({
       success: true,
       message: message
@@ -108,17 +90,7 @@ export const DELETE = withAuth(async (
 
     await message.save();
 
-    // Emit socket event for realtime update
-    const conversationId = message.isGroupMessage ? message.groupId : message.receiver;
-    if (io && conversationId) {
-      io.to(conversationId.toString()).emit('messageReaction', {
-        messageId: message._id,
-        reactions: message.reactions,
-        userId: user.id,
-        reactionType: null
-      });
-    }
-
+    // Socket.io events will be handled by client-side socket connection
     return NextResponse.json({
       success: true,
       message: message

@@ -431,6 +431,62 @@ export default function MessagesComponent({ currentUserId }: MessagesComponentPr
     }
   };
 
+  // Add reaction to message
+  const handleAddReaction = async (messageId: string, reactionType: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      const res = await fetch(`/api/messages/message/${messageId}/reaction`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ reactionType }),
+      });
+
+      const data = await res.json();
+      if (data.success && data.message) {
+        // Update message in local state
+        setMessages(prevMessages =>
+          prevMessages.map(m =>
+            m._id === messageId ? { ...m, reactions: data.message.reactions } : m
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Add reaction error:', error);
+    }
+  };
+
+  // Remove reaction from message
+  const handleRemoveReaction = async (messageId: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      const res = await fetch(`/api/messages/message/${messageId}/reaction`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+      if (data.success && data.message) {
+        // Update message in local state
+        setMessages(prevMessages =>
+          prevMessages.map(m =>
+            m._id === messageId ? { ...m, reactions: data.message.reactions } : m
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Remove reaction error:', error);
+    }
+  };
+
   // Select conversation
   const handleSelectUser = async (userId: string) => {
     setSelectedUser(userId);
@@ -1228,6 +1284,8 @@ export default function MessagesComponent({ currentUserId }: MessagesComponentPr
                     isGroupChat={otherUserInfo?.role === 'group'}
                     currentUserId={currentUserId}
                     onDelete={() => handleDeleteMessage(msg._id)}
+                    onReaction={handleAddReaction}
+                    onRemoveReaction={handleRemoveReaction}
                   />
                 ))
               )}
