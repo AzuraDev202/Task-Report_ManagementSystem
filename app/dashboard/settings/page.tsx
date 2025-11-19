@@ -474,7 +474,7 @@ export default function SettingsPage() {
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">Ngày tạo:</span>
-            <span className="font-medium">{new Date(currentUser?.createdAt).toLocaleDateString('vi-VN')}</span>
+            <span className="font-medium px-2 py-0.5 rounded bg-blue-100 text-blue-800">{new Date(currentUser?.createdAt).toLocaleDateString('vi-VN')}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">Trạng thái:</span>

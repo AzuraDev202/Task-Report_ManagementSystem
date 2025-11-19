@@ -2,11 +2,39 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
-import { FiPlus, FiEdit2, FiEye, FiSearch, FiFilter, FiUsers, FiUserCheck, FiUserX, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiEye, FiSearch, FiFilter, FiUsers, FiUserCheck, FiUserX, FiChevronLeft, FiChevronRight, FiTrash2 } from 'react-icons/fi';
 
 const ITEMS_PER_PAGE = 10;
 
 export default function UsersPage() {
+    const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+    const [deleteMessage, setDeleteMessage] = useState<string>('');
+    // Delete user handler
+    const handleDeleteUser = async (userId: string) => {
+      if (!window.confirm('Bạn có chắc chắn muốn xóa tài khoản này?')) return;
+      setDeletingUserId(userId);
+      setDeleteMessage('');
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`/api/users/${userId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        if (res.ok) {
+          setUsers(prev => prev.filter(u => u._id !== userId));
+          setDeleteMessage('Xóa tài khoản thành công!');
+        } else {
+          const data = await res.json();
+          setDeleteMessage(data.message || 'Xóa tài khoản thất bại!');
+        }
+      } catch (error) {
+        setDeleteMessage('Đã xảy ra lỗi khi xóa tài khoản!');
+      } finally {
+        setDeletingUserId(null);
+      }
+    };
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -157,14 +185,6 @@ export default function UsersPage() {
           <p className="text-sm text-red-100">Ngừng hoạt động</p>
         </div>
         
-        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-4 text-white shadow-lg">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold">ADMIN</span>
-            <span className="text-2xl font-bold">{stats.admins}</span>
-          </div>
-          <p className="text-sm text-purple-100">Quản trị viên</p>
-        </div>
-        
         <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl p-4 text-white shadow-lg">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-semibold">MGR</span>
@@ -206,7 +226,6 @@ export default function UsersPage() {
               className="input pl-10 w-full"
             >
               <option value="all">Tất cả vai trò</option>
-              <option value="admin">Admin</option>
               <option value="manager">Manager</option>
               <option value="user">User</option>
             </select>
@@ -241,15 +260,13 @@ export default function UsersPage() {
             </select>
           </div>
         </div>
-
-        {/* Results count */}
-        <div className="mt-4 text-sm text-gray-600">
-          Hiển thị <span className="font-semibold">{startIndex + 1}-{Math.min(endIndex, filteredUsers.length)}</span> trong tổng số <span className="font-semibold">{filteredUsers.length}</span> người dùng
-        </div>
       </div>
 
       {/* Users Table */}
       <div className="card overflow-x-auto">
+        {deleteMessage && (
+          <div className="mb-2 p-2 rounded bg-blue-50 text-blue-700 text-sm">{deleteMessage}</div>
+        )}
         {paginatedUsers.length === 0 ? (
           <p className="text-center py-8 text-gray-500">Không tìm thấy người dùng nào</p>
         ) : (
@@ -298,7 +315,7 @@ export default function UsersPage() {
                       </span>
                     </td>
                     <td className="py-3 px-4">
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 items-center">
                         <Link
                           href={`/dashboard/users/${user._id}`}
                           className="text-green-600 hover:text-green-800 transition-colors"
@@ -307,13 +324,25 @@ export default function UsersPage() {
                           <FiEye size={18} />
                         </Link>
                         {currentUser?.role === 'admin' && (
-                          <Link
-                            href={`/dashboard/users/${user._id}/edit`}
-                            className="text-blue-600 hover:text-blue-800 transition-colors"
-                            title="Chỉnh sửa"
-                          >
-                            <FiEdit2 size={18} />
-                          </Link>
+                          <>
+                            <Link
+                              href={`/dashboard/users/${user._id}/edit`}
+                              className="text-blue-600 hover:text-blue-800 transition-colors"
+                              title="Chỉnh sửa"
+                            >
+                              <FiEdit2 size={18} />
+                            </Link>
+                            {user._id !== currentUser._id && (
+                              <button
+                                onClick={() => handleDeleteUser(user._id)}
+                                className={`text-red-600 hover:text-red-800 transition-colors p-1 rounded ${deletingUserId === user._id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                title="Xóa tài khoản"
+                                disabled={deletingUserId === user._id}
+                              >
+                                <FiTrash2 size={18} />
+                              </button>
+                            )}
+                          </>
                         )}
                       </div>
                     </td>
