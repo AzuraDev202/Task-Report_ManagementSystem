@@ -21,7 +21,7 @@ async function getHandler(request: AuthenticatedRequest) {
     if (isActive !== null) filter.isActive = isActive === 'true';
 
     // Manager and User cannot see Admin accounts
-    if (request.user.role !== 'admin') {
+    if (request.user && request.user.role !== 'admin') {
       filter.role = { $ne: 'admin' };
     }
 
