@@ -2,14 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/middleware';
 import dbConnect from '@/lib/mongodb';
 import Message from '@/lib/models/Message';
-import { Server as SocketIOServer } from 'socket.io';
-
-// GET socket.io instance
-let io: SocketIOServer;
-if (typeof window === 'undefined') {
-  const { io: socketIO } = require('@/server');
-  io = socketIO;
-}
 
 // Mark message as seen
 export const POST = withAuth(async (
@@ -58,15 +50,23 @@ export const POST = withAuth(async (
 
       await message.save();
 
-      // Emit socket event to sender
-      const conversationId = message.isGroupMessage ? message.groupId : message.receiver;
-      if (io && conversationId) {
-        io.to(conversationId.toString()).emit('messageSeen', {
-          messageId: message._id,
-          seenBy: message.seenBy,
-          status: message.status,
-          userId: user.id
-        });
+      // Emit socket event to sender (use global io if available)
+      try {
+        const io = (global as any).io;
+        if (io) {
+          const conversationId = message.isGroupMessage ? message.groupId : message.receiver;
+          if (conversationId) {
+            io.to(conversationId.toString()).emit('messageSeen', {
+              messageId: message._id,
+              seenBy: message.seenBy,
+              status: message.status,
+              userId: user.id
+            });
+          }
+        }
+      } catch (socketError) {
+        console.error('Socket emit error:', socketError);
+        // Continue even if socket fails
       }
     }
 
