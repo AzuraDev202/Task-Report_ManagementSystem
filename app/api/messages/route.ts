@@ -237,7 +237,7 @@ export const POST = withAuth(async (req: NextRequest, { user }: any) => {
     messageObj.content = messageObj.content ? decrypt(messageObj.content) : '';
     
     // Decrypt replyTo content if exists and is populated (not just ObjectId)
-    if (messageObj.replyTo && typeof messageObj.replyTo === 'object' && 'content' in messageObj.replyTo) {
+    if (messageObj.replyTo && typeof messageObj.replyTo === 'object' && 'content' in messageObj.replyTo && typeof messageObj.replyTo.content === 'string') {
       messageObj.replyTo.content = decrypt(messageObj.replyTo.content);
     }
 

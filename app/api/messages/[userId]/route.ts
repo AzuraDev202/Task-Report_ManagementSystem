@@ -85,7 +85,7 @@ export const GET = withAuth(
         const msgObj = msg.toObject();
         msgObj.content = decrypt(msgObj.content);
         // Decrypt replyTo content if exists and is populated (not just ObjectId)
-        if (msgObj.replyTo && typeof msgObj.replyTo === 'object' && 'content' in msgObj.replyTo) {
+        if (msgObj.replyTo && typeof msgObj.replyTo === 'object' && 'content' in msgObj.replyTo && typeof msgObj.replyTo.content === 'string') {
           msgObj.replyTo.content = decrypt(msgObj.replyTo.content);
         }
         return msgObj;
