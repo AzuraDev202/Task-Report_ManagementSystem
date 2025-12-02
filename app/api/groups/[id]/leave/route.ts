@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
-import Group from '@/models/Group';
+import Group from '@/lib/models/Group';
 import { verifyToken } from '@/lib/auth';
 
 export async function POST(

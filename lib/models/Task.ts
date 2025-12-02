@@ -22,6 +22,10 @@ const TaskSchema = new Schema<ITask>(
       ref: 'User',
       required: [true, 'Assigner is required'],
     },
+    group: {
+      type: Schema.Types.ObjectId,
+      ref: 'Group',
+    },
     status: {
       type: String,
       enum: ['pending', 'in-progress', 'completed', 'cancelled'],
@@ -68,6 +72,7 @@ const TaskSchema = new Schema<ITask>(
 
 TaskSchema.index({ assignedTo: 1 });
 TaskSchema.index({ assignedBy: 1 });
+TaskSchema.index({ group: 1 });
 TaskSchema.index({ status: 1 });
 TaskSchema.index({ priority: 1 });
 TaskSchema.index({ dueDate: 1 });

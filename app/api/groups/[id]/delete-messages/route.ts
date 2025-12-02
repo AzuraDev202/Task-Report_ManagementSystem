@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Message from '@/lib/models/Message';
-import Group from '@/models/Group';
+import Group from '@/lib/models/Group';
 import { verifyToken } from '@/lib/auth';
 import mongoose from 'mongoose';
 

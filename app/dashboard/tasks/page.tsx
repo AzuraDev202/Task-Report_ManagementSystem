@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { FiPlus, FiEdit2, FiEye, FiRefreshCw, FiTrash2 } from 'react-icons/fi';
 import { format } from 'date-fns';
 import { useDashboard } from '@/contexts/DashboardContext';
+import ExportButtons from '@/components/ExportButtons';
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<any[]>([]);
@@ -202,6 +203,11 @@ export default function TasksPage() {
           )}
         </div>
       </div>
+
+      {/* Export Buttons */}
+      {tasks.length > 0 && (
+        <ExportButtons data={tasks} type="tasks" className="justify-end" />
+      )}
 
       {/* Filters */}
       <div className="card">

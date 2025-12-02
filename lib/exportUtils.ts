@@ -7,26 +7,28 @@ export const exportTasksToPDF = (tasks: any[], filename = 'tasks.pdf') => {
 
   // Add title
   doc.setFontSize(18);
-  doc.text('Danh sách Công việc', 14, 22);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Danh sach Cong viec', 14, 22);
 
   // Add date
   doc.setFontSize(11);
-  doc.text(`Ngày xuất: ${new Date().toLocaleDateString('vi-VN')}`, 14, 30);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Ngay xuat: ${new Date().toLocaleDateString('vi-VN')}`, 14, 30);
 
-  // Prepare table data
+  // Prepare table data - convert Vietnamese characters
   const tableData = tasks.map((task, index) => [
     index + 1,
-    task.title,
+    task.title || '',
     task.assignedTo?.name || 'N/A',
-    task.status,
-    task.priority,
+    translateStatus(task.status),
+    translatePriority(task.priority),
     new Date(task.dueDate).toLocaleDateString('vi-VN'),
   ]);
 
   // Add table
   autoTable(doc, {
     startY: 35,
-    head: [['STT', 'Tiêu đề', 'Người nhận', 'Trạng thái', 'Ưu tiên', 'Hạn chót']],
+    head: [['STT', 'Tieu de', 'Nguoi nhan', 'Trang thai', 'Uu tien', 'Han chot']],
     body: tableData,
     styles: {
       font: 'helvetica',
@@ -35,10 +37,40 @@ export const exportTasksToPDF = (tasks: any[], filename = 'tasks.pdf') => {
     headStyles: {
       fillColor: [14, 165, 233],
       textColor: 255,
+      fontStyle: 'bold',
+    },
+    columnStyles: {
+      0: { cellWidth: 15 },
+      1: { cellWidth: 50 },
+      2: { cellWidth: 35 },
+      3: { cellWidth: 30 },
+      4: { cellWidth: 25 },
+      5: { cellWidth: 30 },
     },
   });
 
   doc.save(filename);
+};
+
+// Helper functions to translate status and priority
+const translateStatus = (status: string) => {
+  const statusMap: any = {
+    'pending': 'Cho xu ly',
+    'in-progress': 'Dang xu ly',
+    'completed': 'Hoan thanh',
+    'cancelled': 'Da huy',
+  };
+  return statusMap[status] || status;
+};
+
+const translatePriority = (priority: string) => {
+  const priorityMap: any = {
+    'urgent': 'Khan cap',
+    'high': 'Cao',
+    'medium': 'Trung binh',
+    'low': 'Thap',
+  };
+  return priorityMap[priority] || priority;
 };
 
 export const exportTasksToExcel = (tasks: any[], filename = 'tasks.xlsx') => {
@@ -78,23 +110,25 @@ export const exportReportsToPDF = (reports: any[], filename = 'reports.pdf') => 
   const doc = new jsPDF();
 
   doc.setFontSize(18);
-  doc.text('Danh sách Báo cáo', 14, 22);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Danh sach Bao cao', 14, 22);
 
   doc.setFontSize(11);
-  doc.text(`Ngày xuất: ${new Date().toLocaleDateString('vi-VN')}`, 14, 30);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Ngay xuat: ${new Date().toLocaleDateString('vi-VN')}`, 14, 30);
 
   const tableData = reports.map((report, index) => [
     index + 1,
-    report.title,
+    report.title || '',
     report.task?.title || 'N/A',
     report.user?.name || 'N/A',
-    report.status,
+    translateReportStatus(report.status),
     new Date(report.createdAt).toLocaleDateString('vi-VN'),
   ]);
 
   autoTable(doc, {
     startY: 35,
-    head: [['STT', 'Tiêu đề', 'Công việc', 'Người tạo', 'Trạng thái', 'Ngày tạo']],
+    head: [['STT', 'Tieu de', 'Cong viec', 'Nguoi tao', 'Trang thai', 'Ngay tao']],
     body: tableData,
     styles: {
       font: 'helvetica',
@@ -103,10 +137,29 @@ export const exportReportsToPDF = (reports: any[], filename = 'reports.pdf') => 
     headStyles: {
       fillColor: [14, 165, 233],
       textColor: 255,
+      fontStyle: 'bold',
+    },
+    columnStyles: {
+      0: { cellWidth: 15 },
+      1: { cellWidth: 50 },
+      2: { cellWidth: 40 },
+      3: { cellWidth: 35 },
+      4: { cellWidth: 30 },
+      5: { cellWidth: 25 },
     },
   });
 
   doc.save(filename);
+};
+
+const translateReportStatus = (status: string) => {
+  const statusMap: any = {
+    'draft': 'Ban nhap',
+    'submitted': 'Da nop',
+    'approved': 'Da duyet',
+    'rejected': 'Tu choi',
+  };
+  return statusMap[status] || status;
 };
 
 export const exportReportsToExcel = (reports: any[], filename = 'reports.xlsx') => {
@@ -143,36 +196,57 @@ export const exportUsersToPDF = (users: any[], filename = 'users.pdf') => {
   const doc = new jsPDF();
 
   doc.setFontSize(18);
-  doc.text('Danh sách Người dùng', 14, 22);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Danh sach Nguoi dung', 14, 22);
 
   doc.setFontSize(11);
-  doc.text(`Ngày xuất: ${new Date().toLocaleDateString('vi-VN')}`, 14, 30);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Ngay xuat: ${new Date().toLocaleDateString('vi-VN')}`, 14, 30);
 
   const tableData = users.map((user, index) => [
     index + 1,
-    user.name,
-    user.email,
-    user.role,
+    user.name || '',
+    user.email || '',
+    translateRole(user.role),
     user.department || 'N/A',
     user.position || 'N/A',
-    user.isActive ? 'Hoạt động' : 'Không hoạt động',
+    user.isActive ? 'Hoat dong' : 'Khong hoat dong',
   ]);
 
   autoTable(doc, {
     startY: 35,
-    head: [['STT', 'Họ tên', 'Email', 'Vai trò', 'Phòng ban', 'Chức vụ', 'Trạng thái']],
+    head: [['STT', 'Ho ten', 'Email', 'Vai tro', 'Phong ban', 'Chuc vu', 'Trang thai']],
     body: tableData,
     styles: {
       font: 'helvetica',
-      fontSize: 10,
+      fontSize: 9,
     },
     headStyles: {
       fillColor: [14, 165, 233],
       textColor: 255,
+      fontStyle: 'bold',
+    },
+    columnStyles: {
+      0: { cellWidth: 12 },
+      1: { cellWidth: 35 },
+      2: { cellWidth: 45 },
+      3: { cellWidth: 22 },
+      4: { cellWidth: 25 },
+      5: { cellWidth: 25 },
+      6: { cellWidth: 25 },
     },
   });
 
   doc.save(filename);
+};
+
+const translateRole = (role: string) => {
+  const roleMap: any = {
+    'admin': 'Quan tri',
+    'manager': 'Quan ly',
+    'user': 'Nhan vien',
+  };
+  return roleMap[role] || role;
 };
 
 export const exportUsersToExcel = (users: any[], filename = 'users.xlsx') => {

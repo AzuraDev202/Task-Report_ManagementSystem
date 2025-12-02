@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { FiPlus, FiRefreshCw, FiTrash2 } from 'react-icons/fi';
 import { useDashboard } from '@/contexts/DashboardContext';
+import ExportButtons from '@/components/ExportButtons';
 
 export default function ReportsPage() {
   const [reports, setReports] = useState<any[]>([]);
@@ -185,6 +186,11 @@ export default function ReportsPage() {
           )}
         </div>
       </div>
+
+      {/* Export Buttons - Only for manager/admin */}
+      {reports.length > 0 && (user?.role === 'manager' || user?.role === 'admin') && (
+        <ExportButtons data={reports} type="reports" className="justify-end" />
+      )}
 
       <div className="card">
         {user?.role === 'admin' && reports.length > 0 && (

@@ -19,6 +19,7 @@ export interface ITask {
   description: string;
   assignedTo: string | IUser;
   assignedBy: string | IUser;
+  group?: string;
   status: 'pending' | 'in-progress' | 'completed' | 'cancelled';
   priority: 'low' | 'medium' | 'high' | 'urgent';
   dueDate: Date;
